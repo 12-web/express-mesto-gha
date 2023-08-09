@@ -1,8 +1,6 @@
 const Card = require('../models/card');
-
-const SERVER_ERROR = 500;
-const NOTFOUND_ERROR = 404;
-const VALIDATION_ERROR = 400;
+const NotFoundError = require('../components/NotFoundError');
+const { SERVER_ERROR, NOTFOUND_ERROR, VALIDATION_ERROR } = require('../utils/utils');
 
 module.exports.getCards = (req, res) => {
   Card.find({})
@@ -30,10 +28,22 @@ module.exports.createCard = (req, res) => {
 
 module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.id)
-    .then((card) => res.send({ data: card }))
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError('Карточки с введенным _id не существует');
+      }
+
+      res.send({ data: card });
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(NOTFOUND_ERROR).send({ message: 'Данной карточки не существует' });
+        return res.status(VALIDATION_ERROR).send({ message: 'Введен некорректный тип данных (_id)' });
+      }
+
+      if (err.name === 'NotFoundError') {
+        return res.status(NOTFOUND_ERROR).send({
+          message: err.message,
+        });
       }
 
       return res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
@@ -46,16 +56,24 @@ module.exports.likeCard = (req, res) => {
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((card) => res.send({ data: card }))
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError('Карточки с введенным _id не существует');
+      }
+
+      res.send({ data: card });
+    })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         return res.status(VALIDATION_ERROR).send({
           message: `Введен некорректный тип данных (${err.message})`,
         });
       }
 
-      if (err.name === 'CastError') {
-        return res.status(NOTFOUND_ERROR).send({ message: 'Данной карточки не существует' });
+      if (err.name === 'NotFoundError') {
+        return res.status(NOTFOUND_ERROR).send({
+          message: err.message,
+        });
       }
 
       return res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
@@ -68,16 +86,24 @@ module.exports.dislikeCard = (req, res) => {
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((card) => res.send({ data: card }))
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError('Карточки с введенным _id не существует');
+      }
+
+      res.send({ data: card });
+    })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || err.name === 'CastError') {
         return res.status(VALIDATION_ERROR).send({
           message: `Введен некорректный тип данных (${err.message})`,
         });
       }
 
-      if (err.name === 'CastError') {
-        return res.status(NOTFOUND_ERROR).send({ message: 'Данной карточки не существует' });
+      if (err.name === 'NotFoundError') {
+        return res.status(NOTFOUND_ERROR).send({
+          message: err.message,
+        });
       }
 
       return res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });

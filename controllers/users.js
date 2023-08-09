@@ -1,8 +1,6 @@
 const User = require('../models/user');
-
-const SERVER_ERROR = 500;
-const NOTFOUND_ERROR = 404;
-const VALIDATION_ERROR = 400;
+const NotFoundError = require('../components/NotFoundError');
+const { SERVER_ERROR, NOTFOUND_ERROR, VALIDATION_ERROR } = require('../utils/utils');
 
 module.exports.getUsers = (req, res) => {
   User.find({})
@@ -14,12 +12,24 @@ module.exports.getUsers = (req, res) => {
 
 module.exports.getUser = (req, res) => {
   User.findById(req.params.id)
-    .then((user) => res.send({ user }))
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Пользователя с введенным _id не существует');
+      }
+
+      res.send({ user });
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
         return res
-          .status(NOTFOUND_ERROR)
-          .send({ message: 'Данного пользователя не существует' });
+          .status(VALIDATION_ERROR)
+          .send({ message: 'Введен некорректный _id пользователя' });
+      }
+
+      if (err.name === 'NotFoundError') {
+        return res.status(NOTFOUND_ERROR).send({
+          message: err.message,
+        });
       }
 
       return res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
