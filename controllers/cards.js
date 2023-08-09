@@ -27,7 +27,7 @@ module.exports.createCard = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.id)
+  Card.findByIdAndRemove(req.params.cardId)
     .then((card) => {
       if (!card) {
         throw new NotFoundError('Карточки с введенным _id не существует');
@@ -66,7 +66,7 @@ module.exports.likeCard = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         return res.status(VALIDATION_ERROR).send({
-          message: `Введен некорректный тип данных (${err.message})`,
+          message: 'Введен некорректный тип данных (_id)',
         });
       }
 
@@ -96,7 +96,7 @@ module.exports.dislikeCard = (req, res) => {
     .catch((err) => {
       if (err.name === 'ValidationError' || err.name === 'CastError') {
         return res.status(VALIDATION_ERROR).send({
-          message: `Введен некорректный тип данных (${err.message})`,
+          message: 'Введен некорректный тип данных (_id)',
         });
       }
 
