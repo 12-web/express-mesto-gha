@@ -1,27 +1,37 @@
 const express = require('express');
+const { errors } = require('celebrate');
+const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
-const { NOTFOUND_ERROR } = require('./utils/utils');
+const NotFoundError = require('./components/NotFoundError');
 
 const { PORT = 3000 } = process.env;
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-mongoose.connect('mongodb://localhost:27017/mestodb');
-
-app.use((req, res, next) => {
-  req.user = {
-    _id: '64d25f2f4f45988fbd66ee41',
-  };
-  next();
+mongoose.connect('mongodb://localhost:27017/mestodb', {
+  useUnifiedTopology: true,
+  useNewUrlParser: true,
+  autoIndex: true,
 });
 
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
-app.all('*', (req, res) => {
-  res.status(NOTFOUND_ERROR).send({ message: 'Задан неверный путь' });
+app.all('*', () => { throw new NotFoundError('Задан неверный путь'); });
+
+app.use(errors());
+
+app.use((err, _, res, next) => {
+  const { statusCode = 500, message } = err;
+
+  res.status(statusCode).send({
+    message: statusCode === 500 ? 'На сервере произошла ошибка' : message,
+  });
+
+  next();
 });
 
 app.listen(PORT, () => {

@@ -1,57 +1,116 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const NotFoundError = require('../components/NotFoundError');
-const { SERVER_ERROR, NOTFOUND_ERROR, VALIDATION_ERROR } = require('../utils/utils');
+const BadRequestError = require('../components/BadRequestError');
+const ConflictError = require('../components/ConflictError');
 
-module.exports.getUsers = (req, res) => {
+/**
+ * получение всех пользователей из БД
+ */
+module.exports.getUsers = (_, res, next) => {
   User.find({})
-    .then((users) => res.send({ data: users }))
-    .catch(() => {
-      res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
-    });
+    .then((users) => res.send(users))
+    .catch(next);
 };
 
-module.exports.getUser = (req, res) => {
-  User.findById(req.params.id)
+/**
+ * получение пользователя по ID
+ */
+module.exports.getUser = (req, res, next) => {
+  User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователя с введенным _id не существует');
       }
 
-      res.send({ user });
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res
-          .status(VALIDATION_ERROR)
-          .send({ message: 'Введен некорректный _id пользователя' });
-      }
-
-      if (err.name === 'NotFoundError') {
-        return res.status(NOTFOUND_ERROR).send({
-          message: err.message,
-        });
-      }
-
-      return res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        next(new BadRequestError('Введен некорректный _id пользователя'));
+      } else next(err);
     });
 };
 
-module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+/**
+ * получение данных об авторизованном пользователе
+ * данные авторизации приходят из cookies
+ */
+module.exports.getCurrentUser = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => res.send(user))
+    .catch(next);
+};
+
+/**
+ * авторизация пользователя
+ */
+module.exports.login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  /**
+   * проверка наличия в БД пользователя с указанной почтой и проверка пароля
+   * при успехе возвращается объект с данными пользователя
+   */
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', {
+        expiresIn: '7d',
+      });
+
+      /**
+       * при удачной авторизации токен отправляется ввиде coockie
+       */
+      res
+        .cookie('jwt', token, {
+          maxAge: 3600000 * 24 * 7,
+          httpOnly: true,
+          sameSite: true,
+        })
+        .end();
+    })
+    .catch(next);
+};
+
+/**
+ * создание пользователя
+ */
+module.exports.createUser = (req, res, next) => {
+  const {
+    email,
+    password,
+    name,
+    about,
+    avatar,
+  } = req.body;
+
+  /**
+   * создание хэша пароля
+   */
+  bcrypt
+    .hash(password, 10)
+    .then((hash) => User.create({
+      email,
+      password: hash,
+      name,
+      about,
+      avatar,
+    }))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(VALIDATION_ERROR).send({
-          message: `Введен некорректный тип данных (${err.message})`,
-        });
-      }
-
-      return res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        next(new BadRequestError('Введен некорректный тип данных'));
+      } else if (err.code === 11000) {
+        next(new ConflictError('Пользователь с такой почтой уже существует'));
+      } else next(err);
     });
 };
 
-module.exports.updateProfile = (req, res) => {
+/**
+ * изменение данных пользователя
+ */
+module.exports.updateProfile = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(
@@ -62,43 +121,34 @@ module.exports.updateProfile = (req, res) => {
       runValidators: true,
     },
   )
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(VALIDATION_ERROR).send({
-          message: `Введен некорректный тип данных (${err.message})`,
-        });
-      }
-
-      if (err.name === 'CastError') {
-        return res
-          .status(NOTFOUND_ERROR)
-          .send({ message: 'Данного пользователя не существует' });
-      }
-
-      return res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        next(new BadRequestError('Введен некорректный тип данных'));
+      } else if (err.name === 'CastError') {
+        next(new NotFoundError('Данного пользователя не существует'));
+      } else next(err);
     });
 };
 
-module.exports.updateAvatar = (req, res) => {
-  User.findByIdAndUpdate(req.user._id, { avatar: req.body.avatar }, {
-    new: true,
-    runValidators: true,
-  })
-    .then((user) => res.send({ data: user }))
+/**
+ * изменение аватара пользователя
+ */
+module.exports.updateAvatar = (req, res, next) => {
+  User.findByIdAndUpdate(
+    req.user._id,
+    { avatar: req.body.avatar },
+    {
+      new: true,
+      runValidators: true,
+    },
+  )
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(VALIDATION_ERROR).send({
-          message: `Введен некорректный тип данных (${err.message})`,
-        });
-      }
-
-      if (err.name === 'CastError') {
-        return res
-          .status(NOTFOUND_ERROR)
-          .send({ message: 'Данного пользователя не существует' });
-      }
-
-      return res.status(SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+        next(new BadRequestError(err.message));
+      } else if (err.name === 'CastError') {
+        next(new NotFoundError('Данного пользователя не существует'));
+      } else next(err);
     });
 };
