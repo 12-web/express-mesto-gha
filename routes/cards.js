@@ -8,6 +8,7 @@ const {
   likeCard,
   dislikeCard,
 } = require('../controllers/cards');
+const linkRegex = require('../utils/utils');
 
 router.get('/', celebrate({
   cookies: Joi.object().keys({
@@ -21,7 +22,7 @@ router.post('/', celebrate({
   }),
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
-    link: Joi.string().required().pattern(/^https?:\/\/(www\.)?[\w-.~:/?#[\]@!$&'()*+,;=]+$/),
+    link: Joi.string().required().pattern(linkRegex),
   }),
 }), auth, createCard);
 
@@ -30,7 +31,7 @@ router.delete('/:cardId', celebrate({
     jwt: Joi.string().required(),
   }),
   params: Joi.object().keys({
-    cardId: Joi.string().alphanum().length(24),
+    cardId: Joi.string().length(24).hex().required(),
   }),
 }), auth, deleteCard);
 
@@ -39,7 +40,7 @@ router.put('/:cardId/likes', celebrate({
     jwt: Joi.string().required(),
   }),
   params: Joi.object().keys({
-    cardId: Joi.string().alphanum().length(24),
+    cardId: Joi.string().length(24).hex().required(),
   }),
 }), auth, likeCard);
 
@@ -48,7 +49,7 @@ router.delete('/:cardId/likes', celebrate({
     jwt: Joi.string().required(),
   }),
   params: Joi.object().keys({
-    cardId: Joi.string().alphanum().length(24),
+    cardId: Joi.string().length(24).hex().required(),
   }),
 }), auth, dislikeCard);
 

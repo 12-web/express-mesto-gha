@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const validator = require('validator');
 const UnauthorizedError = require('../components/UnauthorizedError');
+const linkRegex = require('../utils/utils');
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -36,7 +37,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     validate: {
       validator(v) {
-        return /^https?:\/\/(www\.)?[\w-.~:/?#[\]@!$&'()*+,;=]+$/.test(v);
+        return linkRegex.test(v);
       },
       message: 'Введен неверный тип ссылки',
     },

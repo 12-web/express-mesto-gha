@@ -8,6 +8,7 @@ const {
   updateAvatar,
   getCurrentUser,
 } = require('../controllers/users');
+const linkRegex = require('../utils/utils');
 
 router.get('/', auth, getUsers);
 
@@ -22,7 +23,7 @@ router.get('/:userId', celebrate({
     jwt: Joi.string().required(),
   }),
   params: Joi.object().keys({
-    userId: Joi.string().alphanum().length(24),
+    userId: Joi.string().length(24).hex().required(),
   }),
 }), auth, getUser);
 
@@ -41,7 +42,7 @@ router.patch('/me/avatar', celebrate({
     jwt: Joi.string().required(),
   }),
   body: Joi.object().keys({
-    avatar: Joi.string().pattern(/^https?:\/\/(www\.)?[\w-.~:/?#[\]@!$&'()*+,;=]+$/),
+    avatar: Joi.string().pattern(linkRegex),
   }),
 }), auth, updateAvatar);
 
