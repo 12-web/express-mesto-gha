@@ -1,7 +1,6 @@
 const express = require('express');
 const { errors } = require('celebrate');
 const cookieParser = require('cookie-parser');
-
 const mongoose = require('mongoose');
 const NotFoundError = require('./components/NotFoundError');
 
@@ -12,17 +11,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+mongoose.set('toObject', { useProjection: true });
+mongoose.set('toJSON', { useProjection: true });
 mongoose.connect('mongodb://localhost:27017/mestodb', {
   useUnifiedTopology: true,
   useNewUrlParser: true,
   autoIndex: true,
 });
 
+app.use('/', require('./routes'));
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
-app.use('/', require('./routes'));
 
-app.all('*', (req, res, next) => { next(new NotFoundError('Задан неверный путь')); });
+app.all('*', () => { throw new NotFoundError('Задан неверный путь'); });
 
 app.use(errors());
 

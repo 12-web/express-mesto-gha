@@ -9,11 +9,7 @@ const {
   getCurrentUser,
 } = require('../controllers/users');
 
-router.get('/', celebrate({
-  cookies: Joi.object().keys({
-    jwt: Joi.string().required(),
-  }),
-}), auth, getUsers);
+router.get('/', auth, getUsers);
 
 router.get('/me', celebrate({
   cookies: Joi.object().keys({
@@ -45,7 +41,7 @@ router.patch('/me/avatar', celebrate({
     jwt: Joi.string().required(),
   }),
   body: Joi.object().keys({
-    avatar: Joi.string(),
+    avatar: Joi.string().pattern(/^https?:\/\/(www\.)?[\w-.~:/?#[\]@!$&'()*+,;=]+$/),
   }),
 }), auth, updateAvatar);
 
