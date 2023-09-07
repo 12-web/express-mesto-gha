@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const NotFoundError = require('./components/NotFoundError');
 const errorHandler = require('./middlewares/error-handler');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -37,12 +38,13 @@ mongoose.set('toJSON', { useProjection: true });
 /**
  * подключение базы данных
  */
-mongoose.connect('mongodb://localhost:27017/mestodb', {
+mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
   useUnifiedTopology: true,
   useNewUrlParser: true,
   autoIndex: true,
 });
 
+app.use(requestLogger);
 /**
  * установка роутов
  */
@@ -50,10 +52,13 @@ app.use('/', require('./routes'));
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
+app.use(errorLogger);
 /**
  * обработка ошибок
  */
-app.all('*', () => { throw new NotFoundError('Задан неверный путь'); });
+app.all('*', () => {
+  throw new NotFoundError('Задан неверный путь');
+});
 
 app.use(errors());
 app.use(errorHandler);
