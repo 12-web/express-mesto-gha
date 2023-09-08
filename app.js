@@ -1,5 +1,6 @@
 const express = require('express');
 const helmet = require('helmet');
+const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
 const { errors } = require('celebrate');
 const cookieParser = require('cookie-parser');
@@ -10,6 +11,7 @@ const errorHandler = require('./middlewares/error-handler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 const { PORT = 3000, NODE_ENV, ORIGIN } = process.env;
+dotenv.config();
 const app = express();
 
 /**
