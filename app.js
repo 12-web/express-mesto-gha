@@ -10,8 +10,8 @@ const NotFoundError = require('./components/NotFoundError');
 const errorHandler = require('./middlewares/error-handler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 
-const { PORT = 3000, NODE_ENV, ORIGIN } = process.env;
 dotenv.config();
+const { PORT = 3000, NODE_ENV, ORIGIN } = process.env;
 const app = express();
 
 /**
