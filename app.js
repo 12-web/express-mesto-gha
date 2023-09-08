@@ -4,6 +4,7 @@ const rateLimit = require('express-rate-limit');
 const { errors } = require('celebrate');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const NotFoundError = require('./components/NotFoundError');
 const errorHandler = require('./middlewares/error-handler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
@@ -14,6 +15,15 @@ const app = express();
 /**
  * безопасность приложения (количество запросов и заголовки)
  */
+app.use(
+  cors({
+    origin: 'https://likee.nomoredomainsicu.ru',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders:
+      'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+    credentials: true,
+  }),
+);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
