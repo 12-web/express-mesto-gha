@@ -5,8 +5,6 @@ const NotFoundError = require('../components/NotFoundError');
 const BadRequestError = require('../components/BadRequestError');
 const ConflictError = require('../components/ConflictError');
 
-const { NODE_ENV, JWT_SECRET } = process.env;
-
 /**
  * получение всех пользователей из БД
  */
@@ -20,13 +18,13 @@ module.exports.getUsers = (_, res, next) => {
  * получение пользователя по ID
  */
 module.exports.getUser = (req, res, next) => {
-  User.findById(req.user._id)
+  User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователя с введенным _id не существует');
       }
 
-      res.send({ data: { email: user.email } });
+      res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -57,13 +55,9 @@ module.exports.login = (req, res, next) => {
    */
   User.findUserByCredentials(email, password)
     .then((user) => {
-      const token = jwt.sign(
-        { _id: user._id },
-        NODE_ENV === 'production' ? JWT_SECRET : 'secret-key',
-        {
-          expiresIn: '7d',
-        },
-      );
+      const token = jwt.sign({ _id: user._id }, 'f8291a7e588cad8d7a8638c0a998ad9b095b7e27db1e6a14faf2d701b82f7ba5', {
+        expiresIn: '7d',
+      });
 
       /**
        * при удачной авторизации токен отправляется ввиде coockie
@@ -77,18 +71,6 @@ module.exports.login = (req, res, next) => {
         .send({ message: 'Аторизация пройдена успешно.' });
     })
     .catch(next);
-};
-
-/**
- * удаление cookie пользователя (выход из аккаунта)
- */
-module.exports.signout = (_, res, next) => {
-  try {
-    res.clearCookie('jwt');
-    res.send({ message: 'Cookie cleared' });
-  } catch (err) {
-    next(err);
-  }
 };
 
 /**

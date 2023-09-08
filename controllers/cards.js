@@ -17,7 +17,8 @@ module.exports.getCards = (_, res, next) => {
  */
 module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
-  Card.create({ name, link, owner: { _id: req.user._id } })
+
+  Card.create({ name, link, owner: req.user._id })
     .then((card) => res.status(201).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -42,7 +43,7 @@ module.exports.deleteCard = (req, res, next) => {
        * проверка прав удаления карточки текущим пользователем
        * удалить карточку может только пользователь, создавший карточку
        */
-      if (card.owner._id.toString() !== req.user._id) {
+      if (card.owner.toString() !== req.user._id) {
         throw new ForbiddenError('У данного пользователя нет прав для удаления карточки');
       }
 
@@ -64,7 +65,7 @@ module.exports.deleteCard = (req, res, next) => {
 module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: { _id: req.user._id } } },
+    { $addToSet: { likes: req.user._id } },
     { new: true },
   )
     .then((card) => {
@@ -87,7 +88,7 @@ module.exports.likeCard = (req, res, next) => {
 module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $pull: { likes: { _id: req.user._id } } },
+    { $pull: { likes: req.user._id } },
     { new: true },
   )
     .then((card) => {

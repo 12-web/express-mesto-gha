@@ -10,11 +10,7 @@ const {
 } = require('../controllers/users');
 const linkRegex = require('../utils/utils');
 
-router.get('/', celebrate({
-  cookies: Joi.object().keys({
-    jwt: Joi.string().required(),
-  }),
-}), auth, getUsers);
+router.get('/', auth, getUsers);
 
 router.get('/me', celebrate({
   cookies: Joi.object().keys({

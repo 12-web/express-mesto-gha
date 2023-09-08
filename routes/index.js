@@ -1,17 +1,7 @@
 const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
-const {
-  createUser,
-  login,
-  getUser,
-  signout,
-} = require('../controllers/users');
-const auth = require('../middlewares/auth');
+const { createUser, login } = require('../controllers/users');
 const linkRegex = require('../utils/utils');
-
-router.get('/', auth, getUser);
-
-router.post('/signout', signout);
 
 router.post('/signup', celebrate({
   body: Joi.object().keys({
