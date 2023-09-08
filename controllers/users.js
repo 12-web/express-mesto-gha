@@ -18,13 +18,13 @@ module.exports.getUsers = (_, res, next) => {
  * получение пользователя по ID
  */
 module.exports.getUser = (req, res, next) => {
-  User.findById(req.params.userId)
+  User.findById(req.user._id)
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователя с введенным _id не существует');
       }
 
-      res.send(user);
+      res.send({ data: { email: user.email } });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
