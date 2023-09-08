@@ -11,7 +11,12 @@ const errorHandler = require('./middlewares/error-handler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 dotenv.config();
-const { PORT = 3000, NODE_ENV, ORIGIN } = process.env;
+const {
+  PORT = 3000,
+  NODE_ENV,
+  ORIGIN,
+  DB_CONN,
+} = process.env;
 const app = express();
 
 /**
@@ -51,13 +56,26 @@ mongoose.set('toJSON', { useProjection: true });
 /**
  * подключение базы данных
  */
-mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
+mongoose.connect(DB_CONN, {
   useUnifiedTopology: true,
   useNewUrlParser: true,
   autoIndex: true,
 });
 
+/**
+ * логгирование запросов
+ */
 app.use(requestLogger);
+
+/**
+ * краш-тест
+ */
+app.get('/crash-test', () => {
+  setTimeout(() => {
+    throw new Error('Сервер сейчас упадёт');
+  }, 0);
+});
+
 /**
  * установка роутов
  */
@@ -65,6 +83,9 @@ app.use('/', require('./routes'));
 app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
+/**
+ * логгирование ошибок
+ */
 app.use(errorLogger);
 /**
  * обработка ошибок
