@@ -9,7 +9,7 @@ const NotFoundError = require('./components/NotFoundError');
 const errorHandler = require('./middlewares/error-handler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 
-const { PORT = 3000, NODE_ENV, ORIGIN } = process.env;
+const { PORT = 3000 } = process.env;
 const app = express();
 
 /**
@@ -17,7 +17,7 @@ const app = express();
  */
 app.use(
   cors({
-    origin: NODE_ENV === 'production' ? ORIGIN : 'http://localhost:3001',
+    origin: 'https://likee.nomoredomainsicu.ru',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders:
       'Origin, X-Requested-With, Content-Type, Accept, Authorization',
