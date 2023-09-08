@@ -11,7 +11,7 @@ const errorHandler = require('./middlewares/error-handler');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 dotenv.config();
-const { PORT = 3000, NODE_ENV, ORIGIN, DB_CONN } = process.env;
+const { PORT = 3000, NODE_ENV, ORIGIN } = process.env;
 const app = express();
 
 /**
