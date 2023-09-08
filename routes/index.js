@@ -3,13 +3,12 @@ const { celebrate, Joi } = require('celebrate');
 const {
   createUser,
   login,
-  getUser,
   signout,
+  checkUser,
 } = require('../controllers/users');
-const auth = require('../middlewares/auth');
 const linkRegex = require('../utils/utils');
 
-router.get('/', auth, getUser);
+router.get('/', checkUser);
 
 router.post('/signout', signout);
 
