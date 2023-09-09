@@ -14,7 +14,7 @@ module.exports = (req, _, next) => {
   }
 
   try {
-    const varifyPayload = jwt.verify(token, NODE_ENV === 'production' ? JWT_SECRET_DEV : 'secret-key');
+    const varifyPayload = jwt.verify(token, NODE_ENV !== 'production' ? JWT_SECRET_DEV : 'secret-key');
     console.log(
       '\x1b[31m%s\x1b[0m',
       `
